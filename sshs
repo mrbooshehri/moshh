@@ -1,0 +1,92 @@
+#!/bin/bash
+
+SESSIONS="$HOME/.config/sshs"
+REG_IP="^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$"
+
+[[ ! -d "$SESSIONS" ]] && mkdir -p "$SESSIONS/sessions"
+
+
+# ------------------------- complete context -------------------------
+
+declare -a COMMANDS=(add connect list remove)
+
+if [[ -n $COMP_LINE ]]; then
+    for c in "${COMMANDS[@]}"; do
+        [[ ${c:0:${#2}} == "${2,,}" ]] && echo "$c"
+    done
+    exit
+fi
+
+
+_help(){
+    echo "Simple SSH sessin managmer"
+    echo
+    echo "Usage: sshs [COMMAND]"
+    echo "Commands:" 
+    echo "  add         add session to list"
+    echo "  remove      remove a session from list"
+    echo "  connect     connect by IP"
+    echo
+    echo "Options"
+    echo "  -a      connet with alias"
+    echo "  -h      print this message"
+}
+
+_connet_ip(){
+    echo "Login as:"
+    read HOST
+    ssh "$HOST@$IP"
+}
+
+_connect_alias(){
+    DEST=`grep "$2" < "$SESSIONS/sessions" | awk '{print $2"@"$3}'`
+    ssh "$DEST"
+}
+
+while getopts "ah?" opt 
+do
+   case "$opt" in
+      a) _connect_alias $1
+         ;;
+      h|?) # display _help
+         _help
+         exit;;
+   esac
+done
+
+shift $((OPTIND-1))
+[ "${1:-}" = "--" ] && shift
+
+case $1 in
+    "connect")
+        if [[ $2 =~ $REG_IP ]]; then
+            IP="$2"
+            _connet_ip
+        else
+            ssh $2
+        fi
+        ;;
+    "add")
+        read -p "Username: " USERNAME
+        read -p "IP: " IP
+        read -p "Aias: " ALIAS
+        #TODO check duplication alias
+        if [[ ! -z $ALIAS && ! -z $USERNAME && ! -z $IP ]]; then
+            echo -e "$ALIAS\t\t\t$USERNAME\t\t\t$IP" >> "$SESSIONS/sessions"
+            exit 0
+        else
+            echo "Error: none of fields can be null"
+            exit 1
+        fi
+        ;;
+    "remove")
+        sed -i "/$2/d" "$SESSIONS/sessions"
+        ;;
+    "list")
+        cat $SESSIONS/sessions
+        ;;
+esac
+
+
+
+
