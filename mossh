@@ -1,0 +1,48 @@
+#!/bin/bash
+
+SESSIONS_LIST="test"
+
+for prog in tmux ssh fzf; do
+	[ ! `which $prog` ] && echo "Please install $prog!" && exit 1
+done
+
+_list(){
+   column -t -s "|" $SESSIONS_LIST | fzf -m --reverse
+}
+
+_connect(){
+   while read -r LINE; do
+   done < 
+   if tmux has-session -t mossh; then
+      tmux new-window -t mossh -n $1
+   else
+      tmux new -s mossh -n $1 -d
+   fi
+   tmux send-keys -t mossh:$1 "ssh $2" C-m
+   [ `tmux ls | grep mossh | grep -c attached` -eq 0 ] && tmux a -t mossh
+}
+
+while getopts "lch?" opt 
+do
+   case "$opt" in
+      l)
+         _list
+         exit 0
+				;;
+			c) 
+         SESSION=`_list`
+         [[ -z $SESSION ]] && exit 0
+         SESSION_NAME=`echo $SESSION | awk '{print $1}'`
+         SESSION_ADDRESS=`echo $SESSION | awk '{print $2"@"$3}'`
+         _connect $SESSION_NAME $SESSION_ADDRESS 
+        ;;
+      h\?) # display _help
+         _help
+         exit 0;;
+   esac
+done
+
+shift $((OPTIND-1))
+[ "${1:-}" = "--" ] && shift
+
+
