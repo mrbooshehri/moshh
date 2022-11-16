@@ -1,26 +1,42 @@
 #!/bin/bash
 
+CONFD="config.d"
+MOSSH_HOSTS="mossh.hosts"
+
 # Removing empty lines
 sed -ir '/^\s*$/d' $1
+mkdir -p $CONFD
 
-# Remove special character from group name
-GROUP_NAME=`grep SubRep $1 | head -1 | cut -d "=" -f2 | sed -r 's/[#$\r ]//g'`
-
-# Remove unwanted lines
-sed -i '0,/^\[Bookmark/d' $1
-sed -i '0,/SubRep/d' $1
-sed -i '0,/ImgNum=/d' $1
-
-while read -r LINE
+while [ -s $1 ]
 do
-	[[ $LINE =~ ^\[Bookmark ]] && break
-	# Extract host info
-	HOSTNAME=`echo $LINE | cut -d "=" -f1`
-	HOST_IP=`echo $LINE | cut -d% -f2`
-	HOST_PORT=`echo $LINE | cut -d% -f3`
-	HOST_USERNAME=`echo $LINE | cut -d% -f4`
+	GROUP_NAME=`grep SubRep $1 | head -1 | cut -d "=" -f2`
 
-	# Write host info to file
-	echo -e "Host $HOSTNAME\n\tHostName $HOST_IP:$HOST_PORT\n\tUser $HOST_USERNAME" >> $GROUP_NAME
-	sed -i '1d' $1
-done < "$1"
+	# Remove special character from group name
+	GROUP_NAME_SSHD=`echo ${GROUP_NAME// /} | sed 's/\r//g' | sed -e 's/\\\\/_/g'`
+
+	# Remove unwanted lines
+	sed -i '0,/^\[Bookmark/d' $1
+	sed -i '0,/SubRep/d' $1
+	sed -i '0,/ImgNum=/d' $1
+
+	while read -r LINE
+	do
+		[[ $LINE =~ ^\[Bookmark ]] && break
+
+		# Extract host info
+		HOSTNAME=`echo $LINE | cut -d "=" -f1`
+		HOST_IP=`echo $LINE | cut -d% -f2`
+		HOST_PORT=`echo $LINE | cut -d% -f3`
+		HOST_USERNAME=`echo $LINE | cut -d% -f4 | tr -d '[]()'`
+		GROUP=$(echo "${GROUP_NAME%%\\*}" | sed 's/\r//g')
+		SUBGROUP=$(echo "${GROUP_NAME#*\\}" | sed 's/\r//g')
+		HOST_FILE=$(echo "${GROUP_NAME_SSHD%%_*}" | sed 's/\r//g')
+
+		# Write host info to file
+		echo -e "Host ${GROUP_NAME_SSHD:-ungrouped}_${HOSTNAME// /-}\n\tHostName $HOST_IP:$HOST_PORT\n\tUser ${HOST_USERNAME:-root}" >> \
+			"$CONFD/${HOST_FILE-ungrouped}"
+		echo "${GROUP:-ungrouped}|${SUBGROUP:-ungrouped}|$HOSTNAME|${HOST_USERNAME:-root}|$HOST_IP" >> \
+			$MOSSH_HOSTS
+		sed -i '1d' $1
+	done < "$1"
+done
