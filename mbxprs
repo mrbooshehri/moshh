@@ -28,6 +28,11 @@ do
 		HOST_IP=`echo $LINE | cut -d% -f2`
 		HOST_PORT=`echo $LINE | cut -d% -f3`
 		HOST_USERNAME=`echo $LINE | cut -d% -f4 | tr -d '[]()'`
+		HOST_PPK=`echo $LINE | egrep -o "[A-Za-z0-9\\\.\:\-_ ]*.ppk"`
+		HOST_PEM=`echo $LINE | egrep -o "[A-Za-z0-9\\\.\:\-_ ]*.pem"`
+		HOST_JUMP=`echo $LINE | cut -d% -f9`
+		HOST_JUMP_PORT=`echo $LINE | cut -d% -f10`
+		HOST_JUMP_USERNAME=`echo $LINE | cut -d% -f11`
 		GROUP=$(echo "${GROUP_NAME%%\\*}" | sed 's/\r//g')
 		SUBGROUP=$(echo "${GROUP_NAME#*\\}" | sed 's/\r//g')
 		HOST_FILE=$(echo "${GROUP_NAME_SSHD%%_*}" | sed 's/\r//g')
