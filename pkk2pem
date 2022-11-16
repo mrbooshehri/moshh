@@ -1,0 +1,7 @@
+#!/bin/bash
+
+[[ -z `which puttygen` ]] && echo "Install putty-tools with 'sudo apt install putty-tools'" \
+	&& exit 1
+[[ -z $1 ]] && echo -e "Please pass .pkk file like:\n  pkk2pem file.pkk " && exit 1
+puttygen ${1%%.pkk}.pkk -O private-openssh -o ${1%%.pkk}.pem && echo "pem file converted successfully"
+[[ -f ${1%%.pkk}.pem ]] && chmod 400 ${1%%.pkk}.pem
