@@ -1,2 +1,2 @@
-master-kuber|user|192.168.1.30
-worker-kuber|user|192.168.1.31
+Group|Ubgroup|master-kuber|user|192.168.1.30
+Group|Ubgroup|worker-kuber|user|192.168.1.31
