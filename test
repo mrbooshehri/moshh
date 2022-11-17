@@ -1,2 +1,3 @@
-Group|Ubgroup|master-kuber|user|192.168.1.30
-Group|Ubgroup|worker-kuber|user|192.168.1.31
+Group|sugroup|hostname|username|host IP|jump IP|jump port|jump username
+Group|Ubgroup|master-kuber|user|192.168.1.30|||
+Group|Ubgroup|worker-kuber|user|192.168.1.31|||
