@@ -13,6 +13,14 @@ mkdir -p $SSH_CONF_HOME/$CONFD
 mkdir -p $MOSSH_CONF_HOME/$MOSSH_HOSTS
 mkdir -p $CONFD
 
+# Add config.d to ~/.ssh/config file
+if [[ ! -f "$SSH_CONF_HOME/config" ]]; then
+	touch $SSH_CONF_HOME/config
+	echo "Include config.d/*" >> $SSH_CONF_HOME/config
+else
+	sed -i '1 s/^/Include config.d\/\*\n/' $SSH_CONF_HOME/config
+fi
+
 # Removing empty lines
 sed -ir '/^\s*$/d' $1
 
