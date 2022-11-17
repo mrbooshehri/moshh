@@ -59,7 +59,7 @@ do
 		echo -e "Host ${GROUP_NAME_SSHD:-ungrouped}_${HOSTNAME// /-}\n  HostName $HOST_IP:$HOST_PORT\n  User ${HOST_USERNAME:-root}" >> "$CONFD/${HOST_FILE-ungrouped}"
 
 		if [[ ! -z ${HOST_PEM:-$HOST_PPK} ]]; then
-		  echo "  IdentityFile '${HOST_PEM:-$HOST_PPK}'" >> "$CONFD/${HOST_FILE-ungrouped}"
+		  echo "  IdentityFile ${HOST_PEM:-$HOST_PPK}" >> "$CONFD/${HOST_FILE-ungrouped}"
 		fi
 
 		if [[ ! -z ${HOST_JUMP_IP} ]]; then
@@ -69,7 +69,7 @@ do
 		fi
 
 		# Add info to mossh.hsots
-		echo "${GROUP:-ungrouped}|${SUBGROUP:-ungrouped}|$HOSTNAME|${HOST_USERNAME:-root}|$HOST_IP|${HOST_JUMP_IP// /}|${HOST_JUMP_PORT// /}|${HOST_JUMP_USERNAME// /}" >> $MOSSH_HOSTS
+		echo "${GROUP:-ungrouped}|${SUBGROUP:-ungrouped}|$HOSTNAME|${HOST_USERNAME:-root}|$HOST_IP|${HOST_JUMP_IP// /}|${HOST_JUMP_PORT// /}|${HOST_JUMP_USERNAME// /}|${HOST_PEM:-$HOST_PPK}" >> $MOSSH_HOSTS
 
 		# Delete line
 		sed -i '1d' $1
