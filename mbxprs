@@ -1,11 +1,20 @@
 #!/bin/bash
 
+# Definging variables
+SSH_CONF_HOME="$HOME/.ssh"
+MOSSH_CONF_HOME="$HOME/.config/mossh"
 CONFD="config.d"
 MOSSH_HOSTS="mossh.hosts"
 
+# Creating directories
+mkdir -p $SSH_CONF_HOME
+mkdir -p $MOSSH_CONF_HOME
+mkdir -p $SSH_CONF_HOME/$CONFD
+mkdir -p $MOSSH_CONF_HOME/$MOSSH_HOSTS
+mkdir -p $CONFD
+
 # Removing empty lines
 sed -ir '/^\s*$/d' $1
-mkdir -p $CONFD
 
 while [ -s $1 ]
 do
@@ -28,9 +37,9 @@ do
 		HOST_IP=`echo $LINE | cut -d% -f2`
 		HOST_PORT=`echo $LINE | cut -d% -f3`
 		HOST_USERNAME=`echo $LINE | cut -d% -f4 | tr -d '[]()'`
-		HOST_PPK=`echo $LINE | egrep -o "[A-Za-z0-9\\\.\:\-_ ]*.ppk"`
-		HOST_PEM=`echo $LINE | egrep -o "[A-Za-z0-9\\\.\:\-_ ]*.pem"`
-		HOST_JUMP=`echo $LINE | cut -d% -f9`
+		HOST_PPK=`echo $LINE | egrep -o "[A-Za-z0-9\x00-\x7F\\\.\:_ \-]*.ppk" | head -1`
+		HOST_PEM=`echo $LINE | egrep -o "[A-Za-z0-9\x00-\x7F\\\.\:_ \-]*.pem" | head -1`
+		HOST_JUMP_IP=`echo $LINE | cut -d% -f9`
 		HOST_JUMP_PORT=`echo $LINE | cut -d% -f10`
 		HOST_JUMP_USERNAME=`echo $LINE | cut -d% -f11`
 		GROUP=$(echo "${GROUP_NAME%%\\*}" | sed 's/\r//g')
@@ -38,10 +47,23 @@ do
 		HOST_FILE=$(echo "${GROUP_NAME_SSHD%%_*}" | sed 's/\r//g')
 
 		# Write host info to file
-		echo -e "Host ${GROUP_NAME_SSHD:-ungrouped}_${HOSTNAME// /-}\n\tHostName $HOST_IP:$HOST_PORT\n\tUser ${HOST_USERNAME:-root}" >> \
-			"$CONFD/${HOST_FILE-ungrouped}"
-		echo "${GROUP:-ungrouped}|${SUBGROUP:-ungrouped}|$HOSTNAME|${HOST_USERNAME:-root}|$HOST_IP" >> \
-			$MOSSH_HOSTS
+		# Add info to ~/.ssh/config
+		echo -e "Host ${GROUP_NAME_SSHD:-ungrouped}_${HOSTNAME// /-}\n  HostName $HOST_IP:$HOST_PORT\n  User ${HOST_USERNAME:-root}" >> "$CONFD/${HOST_FILE-ungrouped}"
+
+		if [[ ! -z ${HOST_PEM:-$HOST_PPK} ]]; then
+		  echo "  IdentityFile '${HOST_PEM:-$HOST_PPK}'" >> "$CONFD/${HOST_FILE-ungrouped}"
+		fi
+
+		if [[ ! -z ${HOST_JUMP_IP} ]]; then
+			echo -e "  ProxyJump ${GROUP_NAME_SSHD:-ungrouped}_${HOST_JUMP_IP// /-}" >> "$CONFD/${HOST_FILE-ungrouped}"
+			echo -e "------------ Jump for ${GROUP_NAME_SSHD:-ungrouped}_${HOST_JUMP_IP// /-} ------------" >> "$CONFD/${HOST_FILE-ungrouped}"
+			echo -e "Host ${GROUP_NAME_SSHD:-ungrouped}_${HOST_JUMP_IP// /-}\n  HostName $HOST_JUMP_IP:$HOST_JUMP_PORT\n  User ${HOST_JUMP_USERNAME:-root}" >> "$CONFD/${HOST_FILE-ungrouped}"
+		fi
+
+		# Add info to mossh.hsots
+		echo "${GROUP:-ungrouped}|${SUBGROUP:-ungrouped}|$HOSTNAME|${HOST_USERNAME:-root}|$HOST_IP|${HOST_JUMP_IP// /}|${HOST_JUMP_PORT// /}|${HOST_JUMP_USERNAME// /}" >> $MOSSH_HOSTS
+
+		# Delete line
 		sed -i '1d' $1
 	done < "$1"
 done
