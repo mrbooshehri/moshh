@@ -10,7 +10,7 @@ MOSSH_HOSTS="mossh.hosts"
 mkdir -p $SSH_CONF_HOME
 mkdir -p $MOSSH_CONF_HOME
 mkdir -p $SSH_CONF_HOME/$CONFD
-mkdir -p $MOSSH_CONF_HOME/$MOSSH_HOSTS
+mkdir -p $MOSSH_CONF_HOME && echo "group|sugroup|hostname|username|host IP|jump IP|jump port|jump username|pem path" >> $MOSSH_HOSTS
 mkdir -p $CONFD
 
 # Add config.d to ~/.ssh/config file
