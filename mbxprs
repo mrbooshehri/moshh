@@ -64,7 +64,7 @@ do
 
 		if [[ ! -z ${HOST_JUMP_IP} ]]; then
 			echo -e "  ProxyJump ${GROUP_NAME_SSHD:-ungrouped}_${HOST_JUMP_IP// /-}" >> "$CONFD/${HOST_FILE-ungrouped}"
-			echo -e "------------ Jump for ${GROUP_NAME_SSHD:-ungrouped}_${HOST_JUMP_IP// /-} ------------" >> "$CONFD/${HOST_FILE-ungrouped}"
+			echo -e "#------------ Jump for ${GROUP_NAME_SSHD:-ungrouped}_${HOST_JUMP_IP// /-} ------------" >> "$CONFD/${HOST_FILE-ungrouped}"
 			echo -e "Host ${GROUP_NAME_SSHD:-ungrouped}_${HOST_JUMP_IP// /-}\n  HostName $HOST_JUMP_IP:$HOST_JUMP_PORT\n  User ${HOST_JUMP_USERNAME:-root}" >> "$CONFD/${HOST_FILE-ungrouped}"
 		fi
 
