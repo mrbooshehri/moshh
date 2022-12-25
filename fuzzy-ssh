@@ -19,7 +19,7 @@ fi
 HOSTS_HOME="$HOME/.config/fuzzy-ssh"
 HOSTS_FILE="$HOSTS_HOME/mossh.hosts"
 KEY_HOME="$HOME/.ssh"
-PURBKEY_FILE="$KEY_HOME/vasl.pub"
+PUBKEY_FILE="$KEY_HOME/vasl.pub"
 PRVBKEY_FILE="$KEY_HOME/vasl"
 ! test -d $HOSTS_HOME && mkdir -p $HOSTS_HOME
 
@@ -39,7 +39,7 @@ _list(){
 }
 
 _copy_key(){
-	ssh-copy-id -i $KEY_FILE `cat $HOSTS_FILE | tail +2 | \
+	ssh-copy-id -i $PUBKEY_FILE `cat $HOSTS_FILE | tail +2 | \
 		column -t -s "|" -N Group,Subgroup,Hostname,Username,IP,Jump\ IP,Jump\ Port,Jump\ Username,Pem\ Path -T Jump\ IP,Pem\ Path -o "|" | \
 		fzf --reverse | awk -F "|" '{print $4"@"$5}' | tr -d " "`
 }
