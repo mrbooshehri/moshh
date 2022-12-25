@@ -1,0 +1,68 @@
+#! /bin/bash
+
+########################################
+######## Bash Autocompletion ###########
+########################################
+
+declare -a COMMANDS=(copy-key connect list help)
+
+if [[ -n $COMP_LINE ]]; then
+    for c in "${COMMANDS[@]}"; do
+        [[ ${c:0:${#2}} == "${2,,}" ]] && echo "$c"
+    done
+    exit
+fi
+
+########################################
+############# Variables ################
+########################################
+HOSTS_HOME="$HOME/.config/fuzzy-ssh"
+HOSTS_FILE="$HOSTS_HOME/mossh.hosts"
+KEY_HOME="$HOME/.ssh"
+PURBKEY_FILE="$KEY_HOME/vasl.pub"
+PRVBKEY_FILE="$KEY_HOME/vasl"
+! test -d $HOSTS_HOME && mkdir -p $HOSTS_HOME
+
+########################################
+############## Functions ###############
+########################################
+_connect(){
+	ssh -i $PRVBKEY_FILE `cat $HOSTS_FILE | tail +2 | \
+		column -t -s "|" -N Group,Subgroup,Hostname,Username,IP,Jump\ IP,Jump\ Port,Jump\ Username,Pem\ Path -T Jump\ IP,Pem\ Path -o "|" | \
+		fzf --reverse | awk -F "|" '{print $4"@"$5}' | tr -d " "`
+}
+
+_list(){
+	cat $HOSTS_FILE | tail +2 | \
+		column -t -s "|" -N Group,Subgroup,Hostname,Username,IP,Jump\ IP,Jump\ Port,Jump\ Username,Pem\ Path -T Jump\ IP,Pem\ Path | fzf --reverse -m | \
+		column -t -N Group,Subgroup,Hostname,Username,IP,Jump\ IP,Jump\ Port,Jump\ Username,Pem\ Path -T Jump\ IP,Pem\ Path
+}
+
+_copy_key(){
+	ssh-copy-id -i $KEY_FILE `cat $HOSTS_FILE | tail +2 | \
+		column -t -s "|" -N Group,Subgroup,Hostname,Username,IP,Jump\ IP,Jump\ Port,Jump\ Username,Pem\ Path -T Jump\ IP,Pem\ Path -o "|" | \
+		fzf --reverse | awk -F "|" '{print $4"@"$5}' | tr -d " "`
+}
+
+_help(){
+	echo -e "Fuzzy-ssh v0.1"
+	echo -e "Commands:"
+	echo -e "  conncet\tConnect to ssh session"
+	echo -e "  copy-key\tCopy ssh id to remote"
+	echo -e "  help\tShow this message"
+
+}
+
+shift $((OPTIND-1))
+[ "${1:-}" = "--" ] && shift
+
+case $1 in
+	connect)
+		_connect ;;
+	copy-key)
+		_copy_key ;;
+	list)
+		_list ;;
+	help)
+		_help ;;
+esac
