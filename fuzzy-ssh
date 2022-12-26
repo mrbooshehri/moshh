@@ -19,8 +19,8 @@ fi
 HOSTS_HOME="$HOME/.config/fuzzy-ssh"
 HOSTS_FILE="$HOSTS_HOME/mossh.hosts"
 KEY_HOME="$HOME/.ssh"
-PUBKEY_FILE="$KEY_HOME/vasl.pub"
-PRVBKEY_FILE="$KEY_HOME/vasl"
+PUBKEY_FILE="$KEY_HOME/devops.pub"
+PRVBKEY_FILE="$KEY_HOME/devops"
 ! test -d $HOSTS_HOME && mkdir -p $HOSTS_HOME
 ! test -f $HOSTS_FILE && cat > $HOSTS_FILE <<EOF
 group|sugroup|hostname|username|host IP|jump IP|jump port|jump username|pem path
