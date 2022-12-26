@@ -22,26 +22,44 @@ KEY_HOME="$HOME/.ssh"
 PUBKEY_FILE="$KEY_HOME/vasl.pub"
 PRVBKEY_FILE="$KEY_HOME/vasl"
 ! test -d $HOSTS_HOME && mkdir -p $HOSTS_HOME
+! test -f $HOSTS_FILE && cat > $HOSTS_FILE <<EOF
+group|sugroup|hostname|username|host IP|jump IP|jump port|jump username|pem path
+EOF
 
 ########################################
 ############## Functions ###############
 ########################################
 _connect(){
-	ssh -i $PRVBKEY_FILE `cat $HOSTS_FILE | tail +2 | \
-		column -t -s "|" -N Group,Subgroup,Hostname,Username,IP,Jump\ IP,Jump\ Port,Jump\ Username,Pem\ Path -T Jump\ IP,Pem\ Path -o "|" | \
-		fzf --reverse | awk -F "|" '{print $4"@"$5}' | tr -d " "`
+	if [[ -z $1 ]]; then
+		ssh -i $PRVBKEY_FILE `cat $HOSTS_FILE | tail +2 | \
+			column -t -s "|" -N Group,Subgroup,Hostname,Username,IP,Jump\ IP,Jump\ Port,Jump\ Username,Pem\ Path -T Jump\ IP,Pem\ Path -o "|" | \
+			fzf --reverse | awk -F "|" '{print $4"@"$5}' | tr -d " "`
+	else
+		ssh $1
+	fi
 }
 
 _list(){
-	cat $HOSTS_FILE | tail +2 | \
-		column -t -s "|" -N Group,Subgroup,Hostname,Username,IP,Jump\ IP,Jump\ Port,Jump\ Username,Pem\ Path -T Jump\ IP,Pem\ Path | fzf --reverse -m | \
-		column -t -N Group,Subgroup,Hostname,Username,IP,Jump\ IP,Jump\ Port,Jump\ Username,Pem\ Path -T Jump\ IP,Pem\ Path
+
+	if [[ -z $1 ]]; then
+		cat $HOSTS_FILE | tail +2 | \
+			column -t -s "|" -N Group,Subgroup,Hostname,Username,IP,Jump\ IP,Jump\ Port,Jump\ Username,Pem\ Path -T Jump\ IP,Pem\ Path | fzf --reverse -m | \
+			column -t -N Group,Subgroup,Hostname,Username,IP,Jump\ IP,Jump\ Port,Jump\ Username,Pem\ Path -T Jump\ IP,Pem\ Path
+	elif [[ $1 == "copy" ]]; then
+		cat $HOSTS_FILE | tail +2 | \
+			column -t -s "|" -N Group,Subgroup,Hostname,Username,IP,Jump\ IP,Jump\ Port,Jump\ Username,Pem\ Path -T Jump\ IP,Pem\ Path | fzf --reverse -m | \
+			column -t -N Group,Subgroup,Hostname,Username,IP,Jump\ IP,Jump\ Port,Jump\ Username,Pem\ Path -T Jump\ IP,Pem\ Path | xsel -bi
+	fi
 }
 
 _copy_key(){
-	ssh-copy-id -i $PUBKEY_FILE `cat $HOSTS_FILE | tail +2 | \
-		column -t -s "|" -N Group,Subgroup,Hostname,Username,IP,Jump\ IP,Jump\ Port,Jump\ Username,Pem\ Path -T Jump\ IP,Pem\ Path -o "|" | \
-		fzf --reverse | awk -F "|" '{print $4"@"$5}' | tr -d " "`
+	if [[ -z $1 ]]; then
+		ssh-copy-id -i $PUBKEY_FILE `cat $HOSTS_FILE | tail +2 | \
+			column -t -s "|" -N Group,Subgroup,Hostname,Username,IP,Jump\ IP,Jump\ Port,Jump\ Username,Pem\ Path -T Jump\ IP,Pem\ Path -o "|" | \
+			fzf --reverse | awk -F "|" '{print $4"@"$5}' | tr -d " "`
+	else
+		ssh-copy-id -i  $1
+	fi
 }
 
 _help(){
@@ -50,7 +68,6 @@ _help(){
 	echo -e "  conncet\tConnect to ssh session"
 	echo -e "  copy-key\tCopy ssh id to remote"
 	echo -e "  help\tShow this message"
-
 }
 
 shift $((OPTIND-1))
@@ -58,11 +75,11 @@ shift $((OPTIND-1))
 
 case $1 in
 	connect)
-		_connect ;;
+		_connect $2 ;;
 	copy-key)
 		_copy_key ;;
 	list)
-		_list ;;
+		_list $2 ;;
 	help)
 		_help ;;
 esac
